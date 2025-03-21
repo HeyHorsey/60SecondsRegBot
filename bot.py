@@ -32,7 +32,7 @@ def register_team(message):
         game_details = message.reply_to_message.text
 
         # Check if already registered
-        if not already_registered(message):
+        if not toolbox.already_registered(message):
             # Generate application message
             application_message = f"Заявка на регистрацию\n{game_details}\nКоманда: {TEAM_NAME}\nИгроков: {participants_count}"
             confirm_button = InlineKeyboardButton(text="Подтвердить", callback_data='confirm')
@@ -40,6 +40,9 @@ def register_team(message):
 
             # Send application to admin
             bot.send_message(chat_id=GAME_ADMIN, text=application_message, reply_markup=confirm_markup)
+
+            # Log this registration
+            toolbox.log_registration(message)
 
             # Send confirmation
             bot.send_message(chat_id=TEAM_CHAT, text="Заявка отправлена")
@@ -52,7 +55,28 @@ def register_team(message):
 @bot.callback_query_handler(func=lambda call: True)
 def button(call):
     if call.data == 'confirm':
+        message_id = call.message.message_id
+
+        # Send confirmation message to team
         bot.send_message(chat_id=TEAM_CHAT, text="Команда зарегистрирована на игру")
+
+        # Update the admin message to show confirmation is complete
+        new_markup = InlineKeyboardMarkup([[
+            InlineKeyboardButton(text="✓ Подтверждено", callback_data='confirmed')
+        ]])
+
+        bot.edit_message_reply_markup(
+            chat_id=GAME_ADMIN,
+            message_id=message_id,
+            reply_markup=new_markup
+        )
+
+        # Answer the callback to remove loading state
+        bot.answer_callback_query(call.id, text="Регистрация подтверждена")
+
+    elif call.data == 'confirmed':
+        # This handles clicks on the already-confirmed button
+        bot.answer_callback_query(call.id, text="Регистрация уже была подтверждена")
 
 
 # Just leave it here
