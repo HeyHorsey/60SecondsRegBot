@@ -29,7 +29,7 @@ def register_team(message):
                 participants_count = option.voter_count
                 break
 
-        game_details = message.reply_to_message.text
+        game_details = poll.question
 
         # Check if already registered
         if not toolbox.already_registered(message):
