@@ -8,7 +8,7 @@ bot = telebot.TeleBot(TOKEN)
 
 
 # send poll when game is announced
-@bot.message_handler(func=lambda message: '#анонс' in message.text)
+@bot.channel_post_handler(func=lambda message: '#анонс' in message.text)
 def poll_create(message):
     poll_options = ['Иду', 'Не иду', 'Посмотреть результаты']
     poll_message = bot.send_poll(chat_id=TEAM_CHAT, question=toolbox.handle_announcement(message), options=poll_options, is_anonymous=False)
