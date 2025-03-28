@@ -4,14 +4,20 @@ bot = telebot.TeleBot(TOKEN)
 
 
 # extract text from announcement
-def handle_announcement(message):
-    text_lines = message.text.split('\n')
+def handle_announcement(text):
+    # Handle both string input and message object
+    if not isinstance(text, str):
+        return ""
+
+    text_lines = text.split('\n')
     message_text = ''
     for line in text_lines:
         if STOP_WORD in line:
             break
         message_text += line + '\n'
-    return message_text
+
+    return message_text.strip()
+
 
 
 # Check if team is already registered

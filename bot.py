@@ -3,22 +3,64 @@ from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 import toolbox
 from telebot import types
 from settings import TOKEN, TEAM_CHAT, GAME_ADMIN, TEAM_NAME
-
 bot = telebot.TeleBot(TOKEN)
 
+#Send poll when announcement received
+@bot.channel_post_handler(content_types=['photo', 'text'])
+def handle_all_channel_posts(message):
+    print(f"Received channel post with content type: {message.content_type}")
 
-# send poll when game is announced
-@bot.channel_post_handler(func=lambda message: '#анонс' in message.text)
-def poll_create(message):
-    poll_options = ['Иду', 'Не иду', 'Посмотреть результаты']
-    poll_message = bot.send_poll(chat_id=TEAM_CHAT, question=toolbox.handle_announcement(message), options=poll_options, is_anonymous=False)
-    bot.pin_chat_message(chat_id=TEAM_CHAT, message_id=poll_message.message_id, disable_notification=False)
+    if message.content_type == 'photo':
+        print("This is a photo post")
+        if hasattr(message, 'caption') and message.caption:
+            print(f"Caption: {message.caption}")
+            if '#анонс' in message.caption:
+                print("Processing photo announcement")
+                poll_options = ['Иду', 'Не иду', 'Посмотреть результаты']
+                question = toolbox.handle_announcement(message.caption)
+                poll_message = bot.send_poll(
+                    chat_id=TEAM_CHAT,
+                    question=question,
+                    options=poll_options,
+                    is_anonymous=False
+                )
+                bot.pin_chat_message(
+                    chat_id=TEAM_CHAT,
+                    message_id=poll_message.message_id,
+                    disable_notification=False
+                )
 
+    elif message.content_type == 'text' and '#анонс' in message.text:
+        print("Processing text announcement")
+        poll_options = ['Иду', 'Не иду', 'Посмотреть результаты']
+        poll_message = bot.send_poll(
+            chat_id=TEAM_CHAT,
+            question=toolbox.handle_announcement(message),
+            options=poll_options,
+            is_anonymous=False
+        )
+        bot.pin_chat_message(
+            chat_id=TEAM_CHAT,
+            message_id=poll_message.message_id,
+            disable_notification=False
+        )
 
 # Registration
 @bot.message_handler(commands=['reg'])
 def register_team(message):
+
+    # Debug: Print out all available message attributes
+    print("Message attributes:")
+    #print(f"Text: {message.text}")
+    #print(f"Reply to message: {message.reply_to_message}")
+
     if message.reply_to_message and message.reply_to_message.poll:
+
+        # Debug: Print poll details
+        #print("Poll details:")
+        #print(f"Poll question: {message.reply_to_message.poll.question}")
+        #print(f"Message reply text: {message.reply_to_message.text}")
+        #print(f"Message reply caption: {message.reply_to_message.caption}")
 
         poll = message.reply_to_message.poll
 
