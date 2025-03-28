@@ -1,11 +1,12 @@
 import telebot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 import toolbox
-from telebot import types
+# from telebot import types
 from settings import TOKEN, TEAM_CHAT, GAME_ADMIN, TEAM_NAME
 bot = telebot.TeleBot(TOKEN)
 
-#Send poll when announcement received
+
+# Send poll when announcement received
 @bot.channel_post_handler(content_types=['photo', 'text'])
 def handle_all_channel_posts(message):
     print(f"Received channel post with content type: {message.content_type}")
@@ -45,22 +46,12 @@ def handle_all_channel_posts(message):
             disable_notification=False
         )
 
+
 # Registration
 @bot.message_handler(commands=['reg'])
 def register_team(message):
 
-    # Debug: Print out all available message attributes
-    print("Message attributes:")
-    #print(f"Text: {message.text}")
-    #print(f"Reply to message: {message.reply_to_message}")
-
     if message.reply_to_message and message.reply_to_message.poll:
-
-        # Debug: Print poll details
-        #print("Poll details:")
-        #print(f"Poll question: {message.reply_to_message.poll.question}")
-        #print(f"Message reply text: {message.reply_to_message.text}")
-        #print(f"Message reply caption: {message.reply_to_message.caption}")
 
         poll = message.reply_to_message.poll
 
