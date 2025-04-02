@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  telegram-bot:
+    build: .
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
