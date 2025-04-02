@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: telegram-bot-sa
+  namespace: default
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: telegram-bot-secrets
+  namespace: default
+type: Opaque
+data:
+  # These values should be base64 encoded
+  # Example: echo -n "your-token" | base64
+  BOT_TOKEN: Nzc2ODI0MjY3OTpBQUhLQWVJR0p6SlNoWElYQnJvdDFTN081d3lZbE5PTTVIUQ==
+  TEAM_CHAT: LTg0MzU3ODk0MQ==
+  GAME_ADMIN: OTk4MjAwMzIy
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegram-bot-config
+  namespace: default
+data:
+  STOP_WORD: "#анонс"
+  TEAM_NAME: "Your Team Name"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegram-bot
+  namespace: default
+  labels:
+    app: telegram-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegram-bot
+  template:
+    metadata:
+      labels:
+        app: telegram-bot
+    spec:
+      serviceAccountName: telegram-bot-sa
+      containers:
+      - name: telegram-bot
+        image: ${ECR_REPOSITORY_URI}:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        env:
+        - name: BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: telegram-bot-secrets
+              key: BOT_TOKEN
+        - name: TEAM_CHAT
+          valueFrom:
+            secretKeyRef:
+              name: telegram-bot-secrets
+              key: TEAM_CHAT
+        - name: GAME_ADMIN
+          valueFrom:
+            secretKeyRef:
+              name: telegram-bot-secrets
+              key: GAME_ADMIN
+        - name: STOP_WORD
+          valueFrom:
+            configMapKeyRef:
+              name: telegram-bot-config
+              key: STOP_WORD
+        - name: TEAM_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: telegram-bot-config
+              key: TEAM_NAME
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}
