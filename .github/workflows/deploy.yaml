@@ -41,23 +41,16 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        # Store the repository URI as output
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-    - name: Update kube config
-      run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+    - name: Deploy to Amazon EKS
+      uses: aws-actions/amazon-eks-kubectl@v1
+      with:
+        cluster-name: ${{ env.EKS_CLUSTER_NAME }}
+        args: apply -f kubernetes/deployment.yaml --validate=false
 
-    - name: Deploy to Kubernetes
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: telegram-bot-repo
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        # Update image tag in Kubernetes manifests
-        sed -i "s|\${ECR_REPOSITORY_URI}|$ECR_REGISTRY/$ECR_REPOSITORY|g" kubernetes/deployment.yaml
-        
-        # Apply Kubernetes manifests
-        kubectl apply -f kubernetes/deployment.yaml
-        
-        # Wait for the deployment to complete
-        kubectl rollout status deployment/telegram-bot
+    - name: Verify deployment
+      uses: aws-actions/amazon-eks-kubectl@v1
+      with:
+        cluster-name: ${{ env.EKS_CLUSTER_NAME }}
+        args: rollout status deployment/telegram-bot
