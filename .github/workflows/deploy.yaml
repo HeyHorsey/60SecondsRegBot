@@ -50,14 +50,14 @@ jobs:
       env:
         ECR_REPOSITORY: telegram-bot-repo
 
-    # Install eksctl - an alternative way to interact with EKS
+    # Install eksctl
     - name: Install eksctl
       run: |
         curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
         sudo mv /tmp/eksctl /usr/local/bin
         eksctl version
 
-    # Use eksctl to update kubeconfig and apply the manifest
+    # Update kubeconfig and apply the manifest
     - name: Deploy to EKS
       run: |
         eksctl utils write-kubeconfig --cluster=$EKS_CLUSTER_NAME --region=$AWS_REGION --kubeconfig=$HOME/.kube/config
